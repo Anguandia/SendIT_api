@@ -4,7 +4,7 @@ from instance.config import app_config
 
 from flask import request, jsonify, abort, make_response
 
-from models import Order, User
+from .models import Order, User
 
 import errors
 
@@ -18,8 +18,9 @@ def create_app(config_name):
 
     return app
 
-orders = [{'Id': 1, 'sender': 'kuku', 'reciever': 'papa'}]
 app = create_app(config_name=os.getenv('FLASK_ENV'))
+
+orders = []
 
 #Get all delivery orders
 @app.route('/api/v1/parcels', methods=['GET'])
