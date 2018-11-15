@@ -1,7 +1,6 @@
 import os
 
 class Config:
-    '''default configuration parent class'''
     DEBUG = False
     CSRF_ENABLED = True
     SECRET_KEY = os.getenv('SECRET_KEY')
