@@ -58,6 +58,8 @@ def cancel_order(parcelId):
         if order:
             order.status = "canceled"
             return jsonify({'order': order.to_dict_order()})
+        abort(404)
+    abort(400)
 
 #Create a delivery order
 @app.route('/api/v1/parcels', methods = ['POST'])
@@ -95,7 +97,8 @@ def create_order():
     #    'charge': request.json.get('charge', '0'),
     #}
     orders[str(order.Id)] = order
-    return jsonify({'order': order.to_dict_order()}), 201
+    dict_orders = [orders[key].to_dict_order() for key in orders.keys()]
+    return jsonify({'order': dict_orders}), 201
 
 #Change destination of delivery order
 @app.route('/api/v1/parcels/<parcelId>/changeDestination', methods=['PUT'])
