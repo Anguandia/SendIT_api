@@ -1,9 +1,7 @@
 import pytest
 import json
-from app import create_app
-from test_data import data
+from app import app
 
-app = create_app(config_name='TESTING')
 orders = {}
 
 @pytest.fixture(scope='function')
@@ -137,3 +135,4 @@ def test_current_location_of_parcel_change(client):
 if __name__=="__main__":
     pytest.main()
     
+from test_data import data

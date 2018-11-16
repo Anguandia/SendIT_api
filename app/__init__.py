@@ -12,8 +12,8 @@ def create_app(config_name):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     return app
-app = create_app('DEVELOPMENT')
 
+app = create_app(config_name=os.getenv('FLASK_ENV'))
 @app.errorhandler(400)
 def Bad_request(error):
     return make_response(jsonify({'error': 'bad request'}), 400)
