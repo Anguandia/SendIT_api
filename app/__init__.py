@@ -26,8 +26,8 @@ orders = {}
 @app.route('/api/v1/parcels', methods=['GET'])
 def get_orders():
     if orders:
-        dict_orders = [orders[key].to_dict_order() for key in orders.keys()]
-        return jsonify({'orders': dict_orders})
+        order=[orders[key] for key in orders.keys()]
+        return jsonify({'orders': order})
     abort(404)
 
 #Get a specific delivery order
@@ -35,7 +35,7 @@ def get_orders():
 def get_single_order(parcelId):
     order = orders[str(parcelId)]
     if order:
-        return jsonify({'order': order.to_dict_order()})
+        return jsonify({'order': order})
     abort(404)
 
 #Get all delivery orders created by a specific user
@@ -46,8 +46,8 @@ def get_single_user_orders(userId):
     if keys:
         for key in keys:
             user_orders[key]=orders[key]
-            dict_user_orders=[user_orders[k].to_dict_order() for k in user_orders.keys()]
-            return jsonify({'orders': dict_user_orders})
+            #dict_user_orders=[user_orders[k].to_dict_order() for k in user_orders.keys()]
+            return jsonify({'orders': user_orders})
     abort(404)
 
 #Cancel a delivery order
@@ -56,8 +56,11 @@ def cancel_order(parcelId):
     if request.json:
         order = orders[parcelId]
         if order:
-            order.status = "canceled"
-            return jsonify({'order': order.to_dict_order()})
+            if request.json['status'] == 'delivered':
+                return jsonify({'result': 'parcel already deliverd!'})
+            else:
+                order['status'] = "canceled"
+                return jsonify({'operation': 'canceled'})
         abort(404)
     abort(400)
 
@@ -66,39 +69,39 @@ def cancel_order(parcelId):
 def create_order():
     if not request.json or not 'origin' in request.json or not 'destination' in request.json or not 'reciever' in request.json:
        abort(400)
-    order=Order(
-        len(orders)+1, 
-        request.json['senderId'], 
-        request.json['reciever'], 
-        request.json['origin'], 
-        request.json['destination'],
-        request.json.get('weight', '00'), 
-        request.json.get('status', "recieved"), 
-        request.json.get('service_class', 'standard'), 
-        request.json.get('category', 'domestic'), 
-        request.json.get('current_location', 'source'), 
-        request.json.get('description', 'none'), 
-        request.json.get('due_date', 'unknown'), 
-        request.json.get('charge', '00')
-    ) 
-    #order = {
-    #    'Id': len(orders)+1,
-    #    'origin': request.json['origin'],
-    #    'destination': request.json['destination'],
-    #    'reciever': request.json['reciever'],
-    #    'sender': request.json['sender'],
-    #    'weight': request.json.get('weight', 00),
-    #    'status': request.json.get('status', 'created'),
-    #    'service_class': request.json.get('service_class', 'standard'),
-    #    'category': request.json.get('category', 'domestic'),
-    #    'current_location': request.json.get('current_location', ''),
-    #    'description': request.json.get('description', ''),
-    #    'due_date': request.json.get('due_date', 'unknown'),
-    #    'charge': request.json.get('charge', '0'),
-    #}
-    orders[str(order.Id)] = order
-    dict_orders = [orders[key].to_dict_order() for key in orders.keys()]
-    return jsonify({'order': dict_orders}), 201
+    #order=Order(
+    #    len(orders)+1, 
+    #    request.json['senderId'], 
+    #    request.json['reciever'], 
+    #    request.json['origin'], 
+    #    request.json['destination'],
+    #    request.json.get('weight', '00'), 
+    #    request.json.get('status', "recieved"), 
+    #    request.json.get('service_class', 'standard'), 
+    #    request.json.get('category', 'domestic'), 
+    #    request.json.get('current_location', 'source'), 
+    #    request.json.get('description', 'none'), 
+    #    request.json.get('due_date', 'unknown'), 
+    #    request.json.get('charge', '00')
+    #) 
+    order = {
+        'Id': len(orders)+1,
+        'origin': request.json['origin'],
+        'destination': request.json['destination'],
+        'reciever': request.json['reciever'],
+        'senderId': request.json['senderId'],
+        'weight': request.json.get('weight', '00'),
+        'status': request.json.get('status', 'recieved'),
+        'service_class': request.json.get('service_class', 'standard'),
+        'category': request.json.get('category', 'domestic'),
+        'current_location': request.json.get('current_location', 'source'),
+        'description': request.json.get('description', 'none'),
+        'due_date': request.json.get('due_date', 'unknown'),
+        'charge': request.json.get('charge', '00'),
+    }
+    orders[str(order['Id'])] = order
+    #dict_orders = [orders[key].to_dict_order() for key in orders.keys()]
+    return jsonify({'order': order}), 201
 
 #Change destination of delivery order
 @app.route('/api/v1/parcels/<parcelId>/changeDestination', methods=['PUT'])
@@ -107,8 +110,8 @@ def change_destination(parcelId):
         abort(400)
     order=orders[parcelId]
     if order:
-        order.destination = request.json['destination']
-        return jsonify({'order': order.to_dict_order()})
+        order['destination'] = request.json['destination']
+        return jsonify({'order': order})
     abort(404)
 
 #Update location and atatus of parcel
@@ -117,9 +120,9 @@ def update_location(parcelId):
     if request.json and 'current_location' or 'status' in request.json:
         order = orders[parcelId]
         if order:
-            for key in ['current_location', 'status']:
-                order.to_dict_order()[key] = request.json.get(key, order.to_dict_order()[key])
-                return jsonify({'order': order.to_dict_order()})
+            order['current_location'] = request.json.get('current_location', order['current_location'])
+            order['status'] = request.json.get('status', order['status'])
+            return jsonify({'order': order})
         abort(404)
     abort(400)
 

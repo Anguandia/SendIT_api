@@ -2,20 +2,20 @@ orders = {}
 users = {}
 data = {
     'basic': {"reciever": "kuku", "origin": "kla", "destination": "arua", "senderId": "1"},
-    'json_basic': {
-        'Id': 3,
-        'category': '',
-        'charge': '',
-        'current_location': '',
-        'description': '',
+    'jsn_basic': {
+        'Id': 1,
+        'category': 'domestic',
+        'charge': '00',
+        'current_location': 'source',
+        'description': 'none',
         'destination': 'arua',
-        'due_date': '',
+        'due_date': 'unknown',
         'origin': 'kla',
         'reciever': 'kuku',
         'senderId': '1',
-        'service_class': '',
-        'status': '',
-        'weight': ''
+        'service_class': 'standard',
+        'status': 'recieved',
+        'weight': '00'
     },
     'incomplete': {"reciever": "kuku", "destination": "arua"},
     'second_user': {"reciver": "x", "origin": "y", "destination": "z", "senderId": "2"},
@@ -50,7 +50,7 @@ data = {
             'charge': '00'
         },
     'delivered': {
-            'orderId': 2,
+            'orderId': 1,
             'senderId': 5,
             'reciever': 'john',
             'origin': 'origin',

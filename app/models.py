@@ -31,6 +31,7 @@ class Order(object):
             'charge': self.charge
         }
         return order
+
     def get_order(self):
         print('sender: {}, reciever: {}, ID: {}, destination: {}, origin: {}, charge: {}'.format(self.senderId, self.reciever, self.Id, self.destination, self.origin, self.charge))
 
@@ -55,3 +56,8 @@ class User:
 
     def get_user(self):
         print('user: {}, email: {}, user_type: {}'.format(self.name, self.email, self.user_type))
+
+@staticmethod
+def to_dict_list(orders):
+    dict_list=[orders[key] for key in orders.keys()]
+    return dict_list
