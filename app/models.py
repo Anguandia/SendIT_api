@@ -57,7 +57,6 @@ class User:
     def get_user(self):
         print('user: {}, email: {}, user_type: {}'.format(self.name, self.email, self.user_type))
 
-@staticmethod
 def to_dict_list(orders):
     dict_list=[orders[key] for key in orders.keys()]
     return dict_list

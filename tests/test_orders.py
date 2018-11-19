@@ -46,7 +46,6 @@ def test_creation_fills_missing_optional_fields_with_defaults(client):
 #Test api can retrieve all orders; correct response code and body
 def test_fetch_all_orders(client):
     post_json(client, 'api/v1/parcels', data['basic'])
-    post_json(client, 'api/v1/parcels', data['complete'])
     response = client.get('api/v1/parcels')
     assert response.status_code == 200  
     assert json_of_response(response) == {'orders': orders}
@@ -56,10 +55,10 @@ def test_fetch_all_orders(client):
 #    post_json(client, 'api/v1/parcels', data['basic'])
 #    post_json(client, 'api/v1/parcels', data['basic'])
 #    post_json(client, 'api/v1/parcels', data['second_user'])
+#    post_json(client, 'api/v1/parcels', data['second_user'])
 #    post_json(client, 'api/v1/parcels', data['basic'])
-#    response = client.get('api/v1/1/parcels')
+#    response = client.get('api/v1/2/parcels')
 #    assert response.status_code == 200
-#    assert len(json_of_response(response)['orders']) == 3
 
 #Test non admin user cannot retrive all orders, correct response: code and message
 #needs user auth first
@@ -134,3 +133,4 @@ if __name__=="__main__":
     pytest.main()
     
 from test_data import data
+from app.models import to_dict_list

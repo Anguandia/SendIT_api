@@ -3,13 +3,14 @@ import os
 from flask import request, jsonify, abort, make_response
 from werkzeug.http import HTTP_STATUS_CODES
 from instance.config import app_config
-from .models import Order, User
+from .models import Order, User, to_dict_list
 
 def create_app(config_name):
     app = FlaskAPI(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    from app.users import user_bp
+    app.register_blueprint(user_bp, url_prefix = '/api/v1')
 
     return app
 
@@ -26,8 +27,8 @@ orders = {}
 @app.route('/api/v1/parcels', methods=['GET'])
 def get_orders():
     if orders:
-        order=[orders[key] for key in orders.keys()]
-        return jsonify({'orders': order})
+        #order=[orders[key] for key in orders.keys()]
+        return jsonify({'orders': orders})
     abort(404)
 
 #Get a specific delivery order
@@ -47,7 +48,7 @@ def get_single_user_orders(userId):
         for key in keys:
             user_orders[key]=orders[key]
             #dict_user_orders=[user_orders[k].to_dict_order() for k in user_orders.keys()]
-            return jsonify({'orders': user_orders})
+            return jsonify({'orders': to_dict_list(user_orders)})
     abort(404)
 
 #Cancel a delivery order
