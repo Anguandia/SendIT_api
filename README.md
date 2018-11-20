@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Anguandia/SendIT_api.svg?branch=develop)](https://travis-ci.org/Anguandia/SendIT_api)
 # SendIT_api
 This is an api for parcel delivery. Users can signup, place an order for a parceldelivery and track the parcel right to the intended destination
 Parcel state and current location will be updated by an admin user
