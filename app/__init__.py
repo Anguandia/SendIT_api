@@ -10,6 +10,8 @@ def create_app(config_name):
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    from app.users import user_bp
+    app.register_blueprint(user_bp, url_prefix='/api/v1')
 
     return app
 
@@ -25,15 +27,15 @@ orders = {}
 #endpoint to get all delivery orders
 @app.route('/api/v1/parcels', methods=['GET'])
 def get_orders():
+    orders = Order.get_orders
     if orders:
-        order=[orders[key] for key in orders.keys()]
-        return jsonify({'orders': order})
+        return jsonify({'orders': orders})
     abort(404)
 
 #Get a specific delivery order
 @app.route('/api/v1/parcels/<int:parcelId>', methods=['GET'])
 def get_single_order(parcelId):
-    order = orders[str(parcelId)]
+    order = Order.get_order(id)
     if order:
         return jsonify({'order': order})
     abort(404)
@@ -41,25 +43,21 @@ def get_single_order(parcelId):
 #Get all delivery orders created by a specific user
 @app.route('/api/v1/<userId>/parcels', methods=['GET'])
 def get_single_user_orders(userId):
-    user_orders = {}
-    keys = [key for key in orders.keys() if key==str(userId)]
-    if keys:
-        for key in keys:
-            user_orders[key]=orders[key]
-            #dict_user_orders=[user_orders[k].to_dict_order() for k in user_orders.keys()]
-            return jsonify({'orders': user_orders})
+    user_orders = Order.get_user_orders(userId)
+    if user_orders:
+        return jsonify({'orders': user_orders})
     abort(404)
 
 #Cancel a delivery order
 @app.route('/api/v1/parcels/<parcelId>/cancel', methods=['PUT'])
 def cancel_order(parcelId):
     if request.json:
-        order = orders[parcelId]
+        order = Order.get_order(parcelId)
         if order:
-            if request.json['status'] == 'delivered':
+            if order['status'] == 'delivered':
                 return jsonify({'result': 'parcel already deliverd!'})
             else:
-                order['status'] = "canceled"
+                Order.update_order(parcelId, (order.destination, 'canceled', order.current_location))
                 return jsonify({'operation': 'canceled'})
         abort(404)
     abort(400)
@@ -69,38 +67,39 @@ def cancel_order(parcelId):
 def create_order():
     if not request.json or not 'origin' in request.json or not 'destination' in request.json or not 'reciever' in request.json:
        abort(400)
-    #order=Order(
-    #    len(orders)+1, 
-    #    request.json['senderId'], 
-    #    request.json['reciever'], 
-    #    request.json['origin'], 
-    #    request.json['destination'],
-    #    request.json.get('weight', '00'), 
-    #    request.json.get('status', "recieved"), 
-    #    request.json.get('service_class', 'standard'), 
-    #    request.json.get('category', 'domestic'), 
-    #    request.json.get('current_location', 'source'), 
-    #    request.json.get('description', 'none'), 
-    #    request.json.get('due_date', 'unknown'), 
-    #    request.json.get('charge', '00')
-    #) 
-    order = {
-        'Id': len(orders)+1,
-        'origin': request.json['origin'],
-        'destination': request.json['destination'],
-        'reciever': request.json['reciever'],
-        'senderId': request.json['senderId'],
-        'weight': request.json.get('weight', '00'),
-        'status': request.json.get('status', 'recieved'),
-        'service_class': request.json.get('service_class', 'standard'),
-        'category': request.json.get('category', 'domestic'),
-        'current_location': request.json.get('current_location', 'source'),
-        'description': request.json.get('description', 'none'),
-        'due_date': request.json.get('due_date', 'unknown'),
-        'charge': request.json.get('charge', '00'),
-    }
-    orders[str(order['Id'])] = order
+    #order = {
+    #    'Id': len(orders)+1,
+    #    'origin': request.json['origin'],
+    #    'destination': request.json['destination'],
+    #    'reciever': request.json['reciever'],
+    #    'senderId': request.json['senderId'],
+    #    'weight': request.json.get('weight', '00'),
+    #    'status': request.json.get('status', 'recieved'),
+    #    'service_class': request.json.get('service_class', 'standard'),
+    #    'category': request.json.get('category', 'domestic'),
+    #    'current_location': request.json.get('current_location', 'source'),
+    #    'description': request.json.get('description', 'none'),
+    #    'due_date': request.json.get('due_date', 'unknown'),
+    #    'charge': request.json.get('charge', '00'),
+    #}
+    #orders[str(order['Id'])] = order
     #dict_orders = [orders[key].to_dict_order() for key in orders.keys()]
+    count = Order.get_count()
+    order = Order(
+        count, 
+        request.json['userId'],
+        request.json['recievr'],
+        request.json['origin'],
+        request.json['detination'],
+        request.json.get('weight', '00'),
+        request.json.get('status', 'recieved'),
+        request.json.get('service_class', 'standard'),
+        request.json.get('category', 'domestic'),
+        request.json.get('current_location', 'source'),
+        request.json.get('description', 'none'),
+        request.json.get('due_date', 'unknown'),
+        request.json.get('charge', '00'),
+         )
     return jsonify({'order': order}), 201
 
 #Change destination of delivery order
@@ -108,10 +107,10 @@ def create_order():
 def change_destination(parcelId):
     if not request.json or not 'destination' in request.json:
         abort(400)
-    order=orders[parcelId]
+    order=Order.get_order(parcelId)
     if order:
-        order['destination'] = request.json['destination']
-        return jsonify({'order': order})
+        Order.update_order(parcelId, (request.json['destination'], order['status'], order['current_location']))
+        return jsonify({'order': 'destination changed'})
     abort(404)
 
 #Update location and atatus of parcel
@@ -120,22 +119,21 @@ def update_location(parcelId):
     if request.json and 'current_location' or 'status' in request.json:
         order = orders[parcelId]
         if order:
-            order['current_location'] = request.json.get('current_location', order['current_location'])
-            order['status'] = request.json.get('status', order['status'])
-            return jsonify({'order': order})
+            Order.update_order(parcelId, (order['destination'], request.json.get('status', order['status']), request.json.get('current_location', order['current_location'])))
+            return jsonify({'order': 'updated'})
         abort(404)
     abort(400)
 
-#delete order
-@app.route('/api/v1/parcels/<parcelId>/delete', methods=['DELETE'])
-def delete(parcelId):
-    if request.json:
-        order = orders[parcelId]
-        if order:
-            del orders[parcelId]
-            return jsonify({'operation': 'deleted'})
-        abort(404)
-    abort(400)
+##delete order
+#@app.route('/api/v1/parcels/<parcelId>/delete', methods=['DELETE'])
+#def delete(parcelId):
+#    if request.json:
+#        order = orders[parcelId]
+#        if order:
+#            del orders[parcelId]
+#            return jsonify({'operation': 'deleted'})
+#        abort(404)
+#    abort(400)
 
     
 if __name__=="__main__":
